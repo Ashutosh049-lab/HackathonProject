@@ -34,6 +34,25 @@ const complaintSchema = new mongoose.Schema(
       enum: ["Pending", "In Progress", "Resolved"],
       default: "Pending",
     },
+    adminComments: [{
+      comment: {
+        type: String,
+        required: true
+      },
+      adminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+      },
+      adminName: {
+        type: String,
+        required: true
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now
+      }
+    }],
   },
   { timestamps: true }
 );

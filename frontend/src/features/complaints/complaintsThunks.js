@@ -21,9 +21,11 @@ export const createComplaint = createAsyncThunk(
 // ✅ Fetch all public complaints
 export const fetchAllComplaints = createAsyncThunk(
   "complaints/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (token, { rejectWithValue }) => {
     try {
-      const res = await API.get("/complaints");
+      const res = await API.get("/complaints", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: err.message });
@@ -59,21 +61,60 @@ export const fetchComplaintById = createAsyncThunk(
   }
 );
 
-// ✅ Admin: Update complaint (status or comment)
+// ✅ Admin: Update complaint status and/or add comment
 export const adminUpdateComplaint = createAsyncThunk(
   "complaints/adminUpdateComplaint",
   async ({ id, data, token }, { rejectWithValue }) => {
     try {
-      // 🧠 Automatically choose endpoint based on what is being updated
-      const endpoint = data.status
-        ? `/admin/complaints/status/${id}`
-        : `/admin/complaints/comment/${id}`;
-
-      const res = await API.patch(endpoint, data, {
+      const res = await API.patch(`/complaints/${id}/status`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       return res.data.complaint;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { message: err.message });
+    }
+  }
+);
+
+// ✅ Admin: Add comment to complaint
+export const adminAddComment = createAsyncThunk(
+  "complaints/adminAddComment",
+  async ({ id, comment, token }, { rejectWithValue }) => {
+    try {
+      const res = await API.post(`/complaints/${id}/comment`, { comment }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.complaint;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { message: err.message });
+    }
+  }
+);
+
+// ✅ Admin: Get all complaints with admin privileges
+export const fetchAdminComplaints = createAsyncThunk(
+  "complaints/fetchAdminComplaints",
+  async (token, { rejectWithValue }) => {
+    try {
+      const res = await API.get("/admin/complaints", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.complaints || res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { message: err.message });
+    }
+  }
+);
+
+// ✅ Admin: Get complaint statistics
+export const fetchAdminStatistics = createAsyncThunk(
+  "complaints/fetchAdminStatistics",
+  async (token, { rejectWithValue }) => {
+    try {
+      const res = await API.get("/admin/statistics", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: err.message });
     }

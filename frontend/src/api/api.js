@@ -4,10 +4,14 @@ const API = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:8081",
 });
 
-// ✅ Attach token for all requests automatically
+// ✅ Attach token for protected requests only
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-  if (token) {
+  
+  // Don't attach token for auth routes (register, login)
+  const isAuthRoute = config.url?.includes('/auth/register') || config.url?.includes('/auth/login');
+  
+  if (token && !isAuthRoute) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

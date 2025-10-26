@@ -96,6 +96,7 @@ const {
   getMyComplaints,
   getComplaintById,
   updateComplaintStatus,
+  addComplaintComment,
   deleteComplaint,
 } = require("../controllers/complaint.controller");
 
@@ -120,7 +121,8 @@ router.get("/:id", authMiddleware, getComplaintById);
 // Delete complaint (only by owner)
 router.delete("/:id", authMiddleware, deleteComplaint);
 
-// Admin route → update complaint status
+// Admin routes → update complaint status and add comments
 router.patch("/:id/status", authMiddleware, adminMiddleware, updateComplaintStatus);
+router.post("/:id/comment", authMiddleware, adminMiddleware, addComplaintComment);
 
 module.exports = router;

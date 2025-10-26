@@ -64,7 +64,7 @@ const ComplaintDetails = () => {
                 <img
                   src={current.imageUrl}
                   alt="complaint"
-                  className="rounded-lg w-full max-h-80 object-cover shadow"
+                  className="rounded-lg w-full max-h-52 object-cover shadow"
                 />
               )}
 

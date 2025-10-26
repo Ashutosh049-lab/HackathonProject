@@ -6,6 +6,7 @@ import {
   fetchMyComplaints,
   fetchComplaintById,
   adminUpdateComplaint,
+  fetchAdminComplaints,
 } from "./complaintsThunks";
 
 const initialState = {
@@ -88,6 +89,20 @@ const complaintsSlice = createSlice({
         if (myIdx >= 0) state.myList[myIdx] = updated;
         if (state.current && state.current._id === updated._id)
           state.current = updated;
+      })
+
+      // ✅ Fetch Admin Complaints
+      .addCase(fetchAdminComplaints.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAdminComplaints.fulfilled, (state, action) => {
+        state.loading = false;
+        state.list = action.payload;
+      })
+      .addCase(fetchAdminComplaints.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || action.error.message;
       });
   },
 });

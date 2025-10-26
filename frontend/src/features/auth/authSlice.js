@@ -26,10 +26,14 @@ const authSlice = createSlice({
       .addCase(registerUser.pending, (s) => { s.loading = true; s.error = null; })
       .addCase(registerUser.fulfilled, (s, action) => {
         s.loading = false;
-        s.user = action.payload.user;
-        s.token = action.payload.token;
-        localStorage.setItem("user", JSON.stringify(action.payload.user));
-        localStorage.setItem("token", action.payload.token);
+        // Registration might not return a token, only user info
+        if (action.payload.token) {
+          s.user = action.payload.user;
+          s.token = action.payload.token;
+          localStorage.setItem("user", JSON.stringify(action.payload.user));
+          localStorage.setItem("token", action.payload.token);
+        }
+        // If no token, just show success (user needs to login)
       })
       .addCase(registerUser.rejected, (s, a) => { s.loading = false; s.error = a.payload?.message || a.error.message; })
       // login

@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const Register = () => {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "user", secretKey: "" });
+  const [showAdminFields, setShowAdminFields] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((s) => s.auth);
@@ -14,7 +15,11 @@ const Register = () => {
   const submit = async (e) => {
     e.preventDefault();
     const res = await dispatch(registerUser(form));
-    if (!res.error) navigate("/");
+    if (!res.error) {
+      // Registration successful, redirect to login
+      alert(`${form.role === 'admin' ? 'Admin' : 'User'} registration successful! Please login.`);
+      navigate("/login");
+    }
   };
 
   return (
@@ -61,6 +66,65 @@ const Register = () => {
             className="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-800/40 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
+
+          {/* Role Selection */}
+          <div className="space-y-3">
+            <label className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+              Register as:
+            </label>
+            <div className="flex space-x-4">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="user"
+                  checked={form.role === "user"}
+                  onChange={(e) => {
+                    setForm({ ...form, role: e.target.value, secretKey: "" });
+                    setShowAdminFields(false);
+                  }}
+                  className="mr-2 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-gray-700 dark:text-gray-300">Regular User</span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="admin"
+                  checked={form.role === "admin"}
+                  onChange={(e) => {
+                    setForm({ ...form, role: e.target.value });
+                    setShowAdminFields(true);
+                  }}
+                  className="mr-2 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-gray-700 dark:text-gray-300">Admin</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Admin Secret Key Field */}
+          {showAdminFields && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <input
+                required={form.role === "admin"}
+                name="secretKey"
+                type="password"
+                placeholder="Admin Secret Key"
+                className="w-full p-3 rounded-xl border border-orange-300 dark:border-orange-700 bg-orange-50/70 dark:bg-orange-900/40 text-gray-900 dark:text-gray-100 placeholder-orange-600 dark:placeholder-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                onChange={(e) => setForm({ ...form, secretKey: e.target.value })}
+              />
+              <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                Contact system administrator for admin secret key
+              </p>
+            </motion.div>
+          )}
 
           <button
             disabled={loading}

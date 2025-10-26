@@ -67,13 +67,38 @@ const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-// ✅ Normal User Register
+// ✅ Normal User Register (with optional role selection)
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    console.log('📝 Registration attempt:', { ...req.body, password: '[REDACTED]', secretKey: req.body.secretKey ? '[PROVIDED]' : '[NOT PROVIDED]' });
+    
+    const { name, email, password, role, secretKey } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !password) {
+      console.log('❌ Missing required fields');
+      return res.status(400).json({ msg: "Name, email, and password are required" });
+    }
 
     let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ msg: "User already exists" });
+    if (user) {
+      console.log('❌ User already exists:', email);
+      return res.status(400).json({ msg: "User already exists" });
+    }
+
+    // Default role is 'user'
+    let userRole = "user";
+    
+    // If admin role is requested, validate secret key
+    if (role === "admin") {
+      console.log('🔐 Admin registration attempt with secret key');
+      if (secretKey !== process.env.ADMIN_SECRET_KEY) {
+        console.log('❌ Invalid admin secret key provided');
+        return res.status(403).json({ msg: "Invalid secret key for admin registration" });
+      }
+      userRole = "admin";
+      console.log('✅ Admin secret key validated');
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -81,12 +106,23 @@ exports.register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "user",
+      role: userRole,
     });
 
-    res.status(201).json({ msg: "User registered successfully" });
+    console.log('✅ User created successfully:', { id: user._id, email: user.email, role: user.role });
+
+    res.status(201).json({ 
+      msg: `${userRole === 'admin' ? 'Admin' : 'User'} registered successfully`,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
-    res.status(500).send(error.message);
+    console.error('❌ Registration error:', error);
+    res.status(500).json({ msg: error.message });
   }
 };
 

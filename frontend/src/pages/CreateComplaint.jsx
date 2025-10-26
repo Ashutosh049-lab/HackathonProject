@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import API from "../api/api";
-import { uploadImageToFirebase } from "../firebase/uploadImage";
 import { ImagePlus, Loader2, Upload } from "lucide-react"; // ✅ modern icons
 
 const CreateComplaint = () => {
@@ -60,20 +59,25 @@ const CreateComplaint = () => {
 
     setLoading(true);
     try {
-      let imageUrl = "";
-      if (formData.image) imageUrl = await uploadImageToFirebase(formData.image);
-
-      const payload = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        imageUrl,
+      const payload = new FormData();
+      payload.append('title', formData.title.trim());
+      payload.append('description', formData.description.trim());
+      payload.append('category', formData.category);
+      payload.append('location', JSON.stringify({
         lat: Number(formData.lat),
         lng: Number(formData.lng),
-      };
+        address: `${formData.lat}, ${formData.lng}` // Temporary address from coordinates
+      }));
+      
+      if (formData.image) {
+        payload.append('image', formData.image);
+      }
 
       await API.post("/complaints", payload, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
       });
 
       alert("✅ Complaint submitted successfully!");
@@ -144,10 +148,9 @@ const CreateComplaint = () => {
               onChange={handleChange}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 p-3 focus:ring-2 focus:ring-blue-500 outline-none transition"
             >
-              <option value="Road">Road</option>
+              <option value="Pothole">Pothole</option>
               <option value="Garbage">Garbage</option>
-              <option value="Electricity">Electricity</option>
-              <option value="Water">Water</option>
+              <option value="Streetlight">Streetlight</option>
               <option value="Other">Other</option>
             </select>
           </div>

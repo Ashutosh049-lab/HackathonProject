@@ -8,6 +8,7 @@ const complaintRoutes = require("./routes/complaint.routes");
 const adminRoutes = require("./routes/admin.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const chatbotRoutes = require("./routes/chatbot.routes");
+const debugRoutes = require("./routes/debug.routes");
 
 
 
@@ -15,16 +16,40 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000"], // Vite dev server runs on 5173 by default
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow localhost and deployed frontend
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://sunny-sorbet-c93331.netlify.app'
+    ];
+    
+    if (!origin || allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log('Headers:', req.headers);
+  console.log('Body:', req.body);
+  next();
+});
 
 app.use("/auth", authRoutes);
 app.use("/complaints", complaintRoutes);
 app.use("/admin", adminRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/chatbot", chatbotRoutes);
+app.use("/debug", debugRoutes);
 
 
 

@@ -290,8 +290,8 @@
 
 const Complaint = require("../models/complaint.model");
 const cloudinary = require("../config/cloudinary");
-const nodemailer = require("nodemailer");
 const User = require("../models/user.model");
+const { sendStatusUpdateEmail, sendComplaintSubmittedEmail } = require("../utils/emailService");
 
 // Create Complaint with Cloudinary image upload
 exports.createComplaint = async (req, res) => {
@@ -328,6 +328,16 @@ exports.createComplaint = async (req, res) => {
       imageUrl,
       location: parsedLocation,
     });
+
+    // Send confirmation email to user
+    try {
+      const user = await User.findById(userId);
+      if (user) {
+        await sendComplaintSubmittedEmail(user.email, user.name, complaint);
+      }
+    } catch (emailError) {
+      console.log('Failed to send confirmation email:', emailError.message);
+    }
 
     res.status(201).json({ msg: "Complaint submitted", complaint });
   } catch (error) {
@@ -370,33 +380,92 @@ exports.getComplaintById = async (req, res) => {
 // Update complaint status (Admin only) + Send email notification
 exports.updateComplaintStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    console.log('🔄 Update complaint status request:', {
+      id: req.params.id,
+      body: req.body,
+      user: req.user
+    });
+    
+    const { status, comment } = req.body;
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) return res.status(404).json({ msg: "Complaint not found" });
+    
+    console.log('📄 Found complaint:', complaint.title);
+
+    // Update status
+    complaint.status = status;
+    
+    // Add admin comment if provided
+    if (comment && comment.trim()) {
+      // Get admin user details
+      const adminUser = await User.findById(req.user.userId);
+      const adminComment = {
+        comment: comment.trim(),
+        adminId: req.user.userId,
+        adminName: adminUser ? (adminUser.name || adminUser.email) : 'Admin',
+        timestamp: new Date()
+      };
+      
+      // Initialize adminComments if it doesn't exist
+      if (!complaint.adminComments) {
+        complaint.adminComments = [];
+      }
+      complaint.adminComments.push(adminComment);
+      console.log('💬 Added admin comment:', adminComment);
+    }
+    
+    await complaint.save();
+
+    // Send email notification to user about status update
+    let emailSent = false;
+    try {
+      const user = await User.findById(complaint.userId);
+      if (user) {
+        emailSent = await sendStatusUpdateEmail(
+          user.email, 
+          user.name, 
+          complaint, 
+          status, 
+          comment
+        );
+      }
+    } catch (emailError) {
+      console.log('Email sending failed (non-critical):', emailError.message);
+    }
+
+    res.json({ 
+      msg: emailSent ? "Status updated and email sent" : "Status updated successfully", 
+      complaint 
+    });
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
+  }
+};
+
+// Add comment to complaint (Admin only)
+exports.addComplaintComment = async (req, res) => {
+  try {
+    const { comment } = req.body;
+    if (!comment || !comment.trim()) {
+      return res.status(400).json({ msg: "Comment is required" });
+    }
+
     const complaint = await Complaint.findById(req.params.id);
     if (!complaint) return res.status(404).json({ msg: "Complaint not found" });
 
-    complaint.status = status;
+    // Get admin user details
+    const adminUser = await User.findById(req.user.userId);
+    const adminComment = {
+      comment: comment.trim(),
+      adminId: req.user.userId,
+      adminName: adminUser ? (adminUser.name || adminUser.email) : 'Admin',
+      timestamp: new Date()
+    };
+    
+    complaint.adminComments.push(adminComment);
     await complaint.save();
 
-    // Send email notification to user
-    const user = await User.findById(complaint.userId);
-    if (user) {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: user.email,
-        subject: `Update on your complaint: ${complaint.title}`,
-        text: `Hello ${user.name},\n\nYour complaint "${complaint.title}" status has been updated to: ${status}.\n\nThank you for reporting!`,
-      });
-    }
-
-    res.json({ msg: "Status updated and email sent", complaint });
+    res.json({ msg: "Comment added successfully", complaint });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
