@@ -380,6 +380,7 @@ exports.getComplaintById = async (req, res) => {
 // Update complaint status (Admin only) + Send email notification
 exports.updateComplaintStatus = async (req, res) => {
   try {
+    console.log('\n=== STATUS UPDATE REQUEST START ===');
     console.log('🔄 Update complaint status request:', {
       id: req.params.id,
       body: req.body,
@@ -419,8 +420,12 @@ exports.updateComplaintStatus = async (req, res) => {
     // Send email notification to user about status update
     let emailSent = false;
     try {
+      console.log('📧 Attempting to send email notification...');
       const user = await User.findById(complaint.userId);
+      console.log('👤 Found user:', user ? { email: user.email, name: user.name } : 'NOT FOUND');
+      
       if (user) {
+        console.log('📨 Calling sendStatusUpdateEmail...');
         emailSent = await sendStatusUpdateEmail(
           user.email, 
           user.name, 
@@ -428,8 +433,12 @@ exports.updateComplaintStatus = async (req, res) => {
           status, 
           comment
         );
+        console.log('✅ Email sent result:', emailSent);
+      } else {
+        console.log('⚠️  User not found for complaint.userId:', complaint.userId);
       }
     } catch (emailError) {
+      console.error('❌ Email error:', emailError);
       console.log('Email sending failed (non-critical):', emailError.message);
     }
 

@@ -55,6 +55,12 @@ const AdminDashboard = () => {
       updateData.comment = adminComment.trim();
     }
     
+    console.log('🚀 Submitting status update:', {
+      complaintId: selected._id,
+      updateData,
+      hasToken: !!currentToken
+    });
+    
     const res = await dispatch(
       adminUpdateComplaint({
         id: selected._id,
@@ -62,11 +68,15 @@ const AdminDashboard = () => {
         token: currentToken
       })
     );
+    
+    console.log('📥 Response received:', res);
+    
     if (!res.error) {
       alert("✅ Complaint updated successfully!");
       setSelected(null);
       dispatch(fetchAdminComplaints(currentToken)); // Refresh the list
     } else {
+      console.error('❌ Error response:', res.error);
       alert("❌ Something went wrong!");
     }
   };

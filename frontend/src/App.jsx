@@ -23,12 +23,14 @@ function App() {
   }, [darkMode]);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-500">
-      <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
+    <div className="min-h-screen flex flex-col items-center w-full overflow-x-hidden bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-500">
+      <div className="w-full max-w-[1920px]">
+        <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
 
-      <main className="container mx-auto pt-28 pb-10 px-4 sm:px-6 md:px-10">
-        <AppRoutes />
-      </main>
+        <main className="w-full pt-28 pb-10 px-4 sm:px-6 md:px-10">
+          <AppRoutes />
+        </main>
+      </div>
 
       {/* Floating Chatbot */}
       <Chatbot />

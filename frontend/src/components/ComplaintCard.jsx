@@ -8,8 +8,8 @@ const ComplaintCard = ({ c }) => {
     : null;
 
   return (
-    <Link to={`/complaints/${c._id}`}>
-      <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-gray-600 transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/50 cursor-pointer group h-full flex flex-col">
+    <Link to={`/complaints/${c._id}`} className="block h-full">
+      <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-gray-600 transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/50 cursor-pointer group h-full flex flex-col min-h-[400px]">
         {/* Image Section - Large and prominent */}
         <div className="relative h-56 bg-gray-900 overflow-hidden">
           {c.imageUrl ? (
