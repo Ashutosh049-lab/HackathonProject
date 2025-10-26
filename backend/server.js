@@ -21,7 +21,7 @@ app.use(cors({
     const allowedOrigins = [
       'http://localhost',
       'http://127.0.0.1',
-      'https://sunny-sorbet-c93331.netlify.app'
+      'https://inquisitive-boba-2f9186.netlify.app'
     ];
     
     if (!origin || allowedOrigins.some(allowed => origin.startsWith(allowed))) {
