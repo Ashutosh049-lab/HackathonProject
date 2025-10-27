@@ -218,11 +218,8 @@ This project is licensed under the ISC License.
 
 ## 👥 Authors
 
-- GitHub: [@CodeWithQadeer](https://github.com/CodeWithQadeer)
+- GitHub: [@Ashutosh049-lab](https://github.com/Ashutosh049-lab)
 
-## 🐛 Issues
-
-Found a bug? Please open an issue [here](https://github.com/CodeWithQadeer/hacakthon-project/issues).
 
 ## 📧 Support
 
