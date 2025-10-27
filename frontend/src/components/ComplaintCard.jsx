@@ -63,7 +63,7 @@ const ComplaintCard = ({ c }) => {
           {/* User Info */}
           <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
             <User className="w-4 h-4" />
-            <span>User{c.userId ? `#${c.userId.slice(-4)}` : ""}</span>
+            <span>User{c.userId ? `#${String(c.userId).slice(-4)}` : ""}</span>
           </div>
 
           {/* Admin Message Preview */}

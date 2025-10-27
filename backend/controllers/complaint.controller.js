@@ -289,7 +289,6 @@
 
 
 const Complaint = require("../models/complaint.model");
-const cloudinary = require("../config/cloudinary");
 const User = require("../models/user.model");
 const { sendStatusUpdateEmail, sendComplaintSubmittedEmail } = require("../utils/emailService");
 
@@ -447,14 +446,18 @@ exports.addComplaintComment = async (req, res) => {
   }
 };
 
-// Delete complaint
+// Delete complaint (by owner or admin)
 exports.deleteComplaint = async (req, res) => {
   try {
     const complaint = await Complaint.findById(req.params.id);
     if (!complaint) return res.status(404).json({ msg: "Not found" });
 
-    if (complaint.userId.toString() !== req.user.userId) {
-      return res.status(403).json({ msg: "You can delete only your own complaints" });
+    // Allow deletion if user is the owner OR an admin
+    const isOwner = complaint.userId.toString() === req.user.userId;
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ msg: "You can only delete your own complaints" });
     }
 
     await complaint.remove();

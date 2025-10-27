@@ -102,12 +102,11 @@ const {
 
 const { authMiddleware } = require("../middlewares/auth.middleware");
 const { adminMiddleware } = require("../middlewares/role.middleware");
-const upload = require("../middlewares/upload.middleware");
 
 const router = express.Router();
 
-// Create complaint
-router.post("/", authMiddleware, upload.single("image"), createComplaint);
+// Create complaint (image uploaded from frontend to Firebase)
+router.post("/", authMiddleware, createComplaint);
 
 // Get complaints of logged-in user only
 router.get("/my-complaints", authMiddleware, getMyComplaints);
