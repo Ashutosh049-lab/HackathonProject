@@ -12,6 +12,12 @@ A full-stack web application that empowers citizens to report and track local is
 - **Email Notifications** - Stay informed with automated email updates
 - **Responsive Design** - Seamless experience across all devices
 
+  ## 🌐 Live Demo
+
+- **Frontend:** [https://inquisitive-boba-2f9186.netlify.app](https://inquisitive-boba-2f9186.netlify.app)
+- **Backend:** [https://hackathonproject-4.onrender.com](https://hackathonproject-4.onrender.com)
+
+
 ## 🛠️ Tech Stack
 
 ### Frontend
@@ -182,10 +188,6 @@ hacakthon-project/
 |----------|-------------|---------|
 | `VITE_API_URL` | Backend API URL | `http://localhost:8081` |
 
-## 🌐 Live Demo
-
-- **Frontend:** [https://inquisitive-boba-2f9186.netlify.app](https://inquisitive-boba-2f9186.netlify.app)
-- **Backend:** [https://hackathonproject-4.onrender.com](https://hackathonproject-4.onrender.com)
 
 ## 🚢 Deployment
 
