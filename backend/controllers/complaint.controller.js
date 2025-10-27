@@ -460,7 +460,7 @@ exports.deleteComplaint = async (req, res) => {
       return res.status(403).json({ msg: "You can only delete your own complaints" });
     }
 
-    await complaint.remove();
+    await Complaint.findByIdAndDelete(req.params.id);
     res.json({ msg: "Complaint deleted" });
   } catch (error) {
     res.status(500).json({ msg: error.message });

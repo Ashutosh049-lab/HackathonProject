@@ -5,7 +5,8 @@ import {
   fetchAdminComplaints,
   adminUpdateComplaint,
   adminAddComment,
-  fetchAdminStatistics
+  fetchAdminStatistics,
+  deleteComplaint
 } from "../features/complaints/complaintsThunks";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -78,6 +79,29 @@ const AdminDashboard = () => {
     } else {
       console.error('❌ Error response:', res.error);
       alert("❌ Something went wrong!");
+    }
+  };
+
+  const handleDelete = async (complaintId) => {
+    if (!window.confirm('Are you sure you want to delete this complaint?')) {
+      return;
+    }
+
+    const currentToken = token || localStorage.getItem('token');
+    if (!currentToken) {
+      alert('❌ Authentication required!');
+      return;
+    }
+
+    try {
+      await dispatch(deleteComplaint({ id: complaintId, token: currentToken })).unwrap();
+      alert('✅ Complaint deleted successfully!');
+      dispatch(fetchAdminComplaints(currentToken)); // Refresh the list
+      if (selected && selected._id === complaintId) {
+        setSelected(null); // Close modal if the deleted complaint was open
+      }
+    } catch (error) {
+      alert('❌ Failed to delete complaint: ' + (error.msg || error.message));
     }
   };
 
@@ -166,12 +190,24 @@ const AdminDashboard = () => {
                 </div>
               )}
 
-              <button
-                onClick={() => open(c)}
-                className="mt-3 w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium py-2 rounded-xl shadow hover:shadow-lg transition"
-              >
-                Review / Update
-              </button>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => open(c)}
+                  className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium py-2 rounded-xl shadow hover:shadow-lg transition"
+                >
+                  Review / Update
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(c._id);
+                  }}
+                  className="px-4 bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded-xl shadow hover:shadow-lg transition"
+                  title="Delete complaint"
+                >
+                  🗑️
+                </button>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -248,19 +284,29 @@ const AdminDashboard = () => {
                 <option>Resolved</option>
               </select>
 
-              <div className="flex justify-end gap-3 mt-5">
+              <div className="flex justify-between gap-3 mt-5">
                 <button
-                  onClick={() => setSelected(null)}
-                  className="px-4 py-2 rounded-lg border border-gray-400 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  onClick={() => {
+                    handleDelete(selected._id);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white shadow hover:shadow-lg transition"
                 >
-                  Cancel
+                  Delete
                 </button>
-                <button
-                  onClick={submitUpdate}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow hover:shadow-lg transition"
-                >
-                  Save
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="px-4 py-2 rounded-lg border border-gray-400 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitUpdate}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow hover:shadow-lg transition"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

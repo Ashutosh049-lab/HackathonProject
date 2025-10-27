@@ -7,6 +7,7 @@ import {
   fetchComplaintById,
   adminUpdateComplaint,
   fetchAdminComplaints,
+  deleteComplaint,
 } from "./complaintsThunks";
 
 const initialState = {
@@ -103,6 +104,16 @@ const complaintsSlice = createSlice({
       .addCase(fetchAdminComplaints.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || action.error.message;
+      })
+
+      // ✅ Delete Complaint
+      .addCase(deleteComplaint.fulfilled, (state, action) => {
+        const deletedId = action.payload;
+        state.list = state.list.filter((c) => c._id !== deletedId);
+        state.myList = state.myList.filter((c) => c._id !== deletedId);
+        if (state.current && state.current._id === deletedId) {
+          state.current = null;
+        }
       });
   },
 });

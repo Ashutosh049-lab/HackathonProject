@@ -120,3 +120,18 @@ export const fetchAdminStatistics = createAsyncThunk(
     }
   }
 );
+
+// ✅ Delete complaint (by owner or admin)
+export const deleteComplaint = createAsyncThunk(
+  "complaints/delete",
+  async ({ id, token }, { rejectWithValue }) => {
+    try {
+      await API.delete(`/complaints/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return id; // Return the deleted complaint ID
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { message: err.message });
+    }
+  }
+);

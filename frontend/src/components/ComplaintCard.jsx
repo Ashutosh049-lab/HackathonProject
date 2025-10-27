@@ -1,7 +1,33 @@
 import { Link } from "react-router-dom";
-import { MapPin, User } from "lucide-react";
+import { MapPin, User, Trash2 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { deleteComplaint } from "../features/complaints/complaintsThunks";
 
-const ComplaintCard = ({ c }) => {
+const ComplaintCard = ({ c, showDelete = false }) => {
+  const dispatch = useDispatch();
+  const { user, token } = useSelector((s) => s.auth);
+
+  const handleDelete = async (e) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation();
+    
+    if (!window.confirm('Are you sure you want to delete this complaint?')) {
+      return;
+    }
+
+    const currentToken = token || localStorage.getItem('token');
+    if (!currentToken) {
+      alert('Authentication required!');
+      return;
+    }
+
+    try {
+      await dispatch(deleteComplaint({ id: c._id, token: currentToken })).unwrap();
+      alert('✅ Complaint deleted successfully!');
+    } catch (error) {
+      alert('❌ Failed to delete complaint: ' + (error.msg || error.message));
+    }
+  };
   // Get the latest admin comment if exists
   const latestAdminComment = c.adminComments && c.adminComments.length > 0 
     ? c.adminComments[c.adminComments.length - 1] 
@@ -91,6 +117,17 @@ const ComplaintCard = ({ c }) => {
             <p className="text-xs text-gray-500 mt-2 italic">
               Awaiting admin review...
             </p>
+          )}
+
+          {/* Delete Button */}
+          {showDelete && (
+            <button
+              onClick={handleDelete}
+              className="mt-3 w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded-lg transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
           )}
         </div>
       </div>

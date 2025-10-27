@@ -11,6 +11,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import { useSelector } from "react-redux";
 import { Route, Routes } from "react-router-dom";
 import CreateComplaint from "../pages/CreateComplaint";
+import MyComplaints from "../pages/MyComplaints";
 
 const AppRoutes = () => {
   const user = useSelector((s) => s.auth.user);
@@ -26,7 +27,7 @@ const AppRoutes = () => {
       {/* protected - requires login */}
       <Route element={<ProtectedRoute isAllowed={!!user} redirectTo="/login" />}>
         <Route path="/create-complaint" element={<CreateComplaint />} />
-        <Route path="/my-complaints" element={<Complaints />} />
+        <Route path="/my-complaints" element={<MyComplaints />} />
       </Route>
 
       {/* admin protected */}
