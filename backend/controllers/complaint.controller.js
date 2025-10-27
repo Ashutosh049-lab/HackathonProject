@@ -449,20 +449,39 @@ exports.addComplaintComment = async (req, res) => {
 // Delete complaint (by owner or admin)
 exports.deleteComplaint = async (req, res) => {
   try {
+    console.log('🗑️ Delete request:', {
+      complaintId: req.params.id,
+      userId: req.user.userId,
+      userRole: req.user.role
+    });
+
     const complaint = await Complaint.findById(req.params.id);
-    if (!complaint) return res.status(404).json({ msg: "Not found" });
+    if (!complaint) {
+      console.log('❌ Complaint not found');
+      return res.status(404).json({ msg: "Not found" });
+    }
+
+    console.log('📋 Complaint found:', {
+      complaintId: complaint._id,
+      ownerId: complaint.userId
+    });
 
     // Allow deletion if user is the owner OR an admin
     const isOwner = complaint.userId.toString() === req.user.userId;
     const isAdmin = req.user.role === "admin";
 
+    console.log('🔐 Permission check:', { isOwner, isAdmin });
+
     if (!isOwner && !isAdmin) {
+      console.log('❌ Permission denied');
       return res.status(403).json({ msg: "You can only delete your own complaints" });
     }
 
     await Complaint.findByIdAndDelete(req.params.id);
+    console.log('✅ Complaint deleted successfully');
     res.json({ msg: "Complaint deleted" });
   } catch (error) {
+    console.error('❌ Delete error:', error);
     res.status(500).json({ msg: error.message });
   }
 };

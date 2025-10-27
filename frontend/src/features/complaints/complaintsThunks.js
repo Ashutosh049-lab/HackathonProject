@@ -38,7 +38,7 @@ export const fetchMyComplaints = createAsyncThunk(
   "complaints/fetchMy",
   async (token, { rejectWithValue }) => {
     try {
-      const res = await API.get("/complaints/my", {
+      const res = await API.get("/complaints/my-complaints", {
         headers: { Authorization: `Bearer ${token}` },
       });
       return res.data;

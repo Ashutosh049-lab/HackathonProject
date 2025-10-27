@@ -13,7 +13,8 @@ import {
   FiMessageSquare,
   FiPlus,
   FiHome,
-  FiChevronDown
+  FiChevronDown,
+  FiFileText
 } from "react-icons/fi";
 
 const Navbar = () => {
@@ -49,7 +50,8 @@ const Navbar = () => {
 
   const navLinks = [
     { to: "/", label: "Home", icon: FiHome },
-    { to: "/complaints", label: "Complaints", icon: FiMessageSquare },
+    { to: "/complaints", label: "All Complaints", icon: FiMessageSquare },
+    ...(user ? [{ to: "/my-complaints", label: "My Complaints", icon: FiFileText }] : []),
     { to: "/create-complaint", label: "Report Issue", icon: FiPlus },
   ];
 
