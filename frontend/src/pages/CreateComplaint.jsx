@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import API from "../api/api";
 import { ImagePlus, Loader2, Upload } from "lucide-react"; // ✅ modern icons
+import { uploadImageToFirebase } from "../firebase/uploadImage";
 
 const CreateComplaint = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ const CreateComplaint = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
   const { token } = useSelector((state) => state.auth);
 
   // ✅ Get user location
@@ -34,15 +36,56 @@ const CreateComplaint = () => {
     }
   }, []);
 
+  // ✅ Compress image helper
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          }, 'image/jpeg', 0.7);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   // ✅ Handle input
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value, files } = e.target;
     if (files && files[0]) {
       const file = files[0];
+      const compressedFile = await compressImage(file);
       setFormData((prev) => ({
         ...prev,
-        image: file,
-        preview: URL.createObjectURL(file),
+        image: compressedFile,
+        preview: URL.createObjectURL(compressedFile),
       }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -59,28 +102,38 @@ const CreateComplaint = () => {
 
     setLoading(true);
     try {
-      const payload = new FormData();
-      payload.append('title', formData.title.trim());
-      payload.append('description', formData.description.trim());
-      payload.append('category', formData.category);
-      payload.append('location', JSON.stringify({
-        lat: Number(formData.lat),
-        lng: Number(formData.lng),
-        address: `${formData.lat}, ${formData.lng}` // Temporary address from coordinates
-      }));
-      
+      // Upload image to Firebase first if exists
+      let imageUrl = null;
       if (formData.image) {
-        payload.append('image', formData.image);
+        setUploadStatus("Uploading image...");
+        imageUrl = await uploadImageToFirebase(formData.image);
       }
 
-      await API.post("/complaints", payload, {
+      setUploadStatus("Submitting complaint...");
+      
+      // Send JSON payload to backend
+      const payload = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        imageUrl,
+        location: {
+          lat: Number(formData.lat),
+          lng: Number(formData.lng),
+          address: `${formData.lat}, ${formData.lng}`
+        }
+      };
+
+      const response = await API.post("/complaints", payload, {
         headers: { 
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         },
       });
 
-      alert("✅ Complaint submitted successfully!");
+      console.log('✅ Response:', response.data);
+      window.alert("✅ Complaint submitted successfully!");
+      console.log('Alert shown');
       setFormData({
         title: "",
         description: "",
@@ -94,6 +147,7 @@ const CreateComplaint = () => {
       alert(err.response?.data?.message || "Error submitting complaint");
     } finally {
       setLoading(false);
+      setUploadStatus("");
     }
   };
 
@@ -212,8 +266,14 @@ const CreateComplaint = () => {
             className="w-full py-3 text-lg font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white transition-all duration-300 disabled:opacity-50 flex justify-center items-center gap-2"
           >
             {loading ? <Loader2 className="animate-spin w-5 h-5" /> : <Upload className="w-5 h-5" />}
-            {loading ? "Submitting..." : "Submit Complaint"}
+            {loading ? uploadStatus : "Submit Complaint"}
           </button>
+          
+          {loading && uploadStatus && (
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
+              {uploadStatus === "Connecting to server..." && "This may take up to 60 seconds on first request..."}
+            </p>
+          )}
         </form>
       </div>
     </div>
@@ -221,3 +281,6 @@ const CreateComplaint = () => {
 };
 
 export default CreateComplaint;
+
+
+

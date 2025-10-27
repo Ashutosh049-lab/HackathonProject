@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || "https://hackathonproject-3.onrender.com",
+  baseURL: import.meta.env.VITE_BACKEND_URL || "https://hackathonproject-4.onrender.com",
 });
 
 // ✅ Attach token for protected requests only

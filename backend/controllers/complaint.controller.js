@@ -293,10 +293,10 @@ const cloudinary = require("../config/cloudinary");
 const User = require("../models/user.model");
 const { sendStatusUpdateEmail, sendComplaintSubmittedEmail } = require("../utils/emailService");
 
-// Create Complaint with Cloudinary image upload
+// Create Complaint (image uploaded from frontend)
 exports.createComplaint = async (req, res) => {
   try {
-    const { title, description, category, location } = req.body;
+    const { title, description, category, location, imageUrl } = req.body;
     const userId = req.user.userId;
 
     if (!title || !description || !category || !location) {
@@ -305,41 +305,29 @@ exports.createComplaint = async (req, res) => {
 
     const parsedLocation = typeof location === "string" ? JSON.parse(location) : location;
 
-    let imageUrl = null;
-    if (req.file) {
-      const uploadResult = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: "complaints" },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve(result);
-          }
-        );
-        stream.end(req.file.buffer);
-      });
-      imageUrl = uploadResult.secure_url;
-    }
-
+    // Create complaint with all data
     const complaint = await Complaint.create({
       userId,
       title,
       description,
       category,
-      imageUrl,
+      imageUrl: imageUrl || null,
       location: parsedLocation,
     });
 
-    // Send confirmation email to user
-    try {
-      const user = await User.findById(userId);
-      if (user) {
-        await sendComplaintSubmittedEmail(user.email, user.name, complaint);
-      }
-    } catch (emailError) {
-      console.log('Failed to send confirmation email:', emailError.message);
-    }
-
+    // Send response immediately
     res.status(201).json({ msg: "Complaint submitted", complaint });
+
+    // Send confirmation email in background (don't await)
+    User.findById(userId)
+      .then(user => {
+        if (user) {
+          return sendComplaintSubmittedEmail(user.email, user.name, complaint);
+        }
+      })
+      .catch(emailError => {
+        console.error('Failed to send confirmation email:', emailError.message);
+      });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
@@ -380,18 +368,9 @@ exports.getComplaintById = async (req, res) => {
 // Update complaint status (Admin only) + Send email notification
 exports.updateComplaintStatus = async (req, res) => {
   try {
-    console.log('\n=== STATUS UPDATE REQUEST START ===');
-    console.log('🔄 Update complaint status request:', {
-      id: req.params.id,
-      body: req.body,
-      user: req.user
-    });
-    
     const { status, comment } = req.body;
     const complaint = await Complaint.findById(req.params.id);
     if (!complaint) return res.status(404).json({ msg: "Complaint not found" });
-    
-    console.log('📄 Found complaint:', complaint.title);
 
     // Update status
     complaint.status = status;
@@ -412,35 +391,23 @@ exports.updateComplaintStatus = async (req, res) => {
         complaint.adminComments = [];
       }
       complaint.adminComments.push(adminComment);
-      console.log('💬 Added admin comment:', adminComment);
     }
     
     await complaint.save();
 
-    // Send email notification to user about status update
-    let emailSent = false;
-    try {
-      console.log('📧 Attempting to send email notification...');
-      const user = await User.findById(complaint.userId);
-      console.log('👤 Found user:', user ? { email: user.email, name: user.name } : 'NOT FOUND');
-      
-      if (user) {
-        console.log('📨 Calling sendStatusUpdateEmail...');
-        emailSent = await sendStatusUpdateEmail(
-          user.email, 
-          user.name, 
-          complaint, 
-          status, 
-          comment
-        );
-        console.log('✅ Email sent result:', emailSent);
-      } else {
-        console.log('⚠️  User not found for complaint.userId:', complaint.userId);
-      }
-    } catch (emailError) {
-      console.error('❌ Email error:', emailError);
-      console.log('Email sending failed (non-critical):', emailError.message);
-    }
+    // Send email notification in background (non-blocking)
+    res.json({ msg: "Status updated successfully", complaint });
+
+    // Send email asynchronously
+    User.findById(complaint.userId)
+      .then(user => {
+        if (user) {
+          return sendStatusUpdateEmail(user.email, user.name, complaint, status, comment);
+        }
+      })
+      .catch(emailError => {
+        console.error('Email sending failed:', emailError.message);
+      });
 
     res.json({ 
       msg: emailSent ? "Status updated and email sent" : "Status updated successfully", 

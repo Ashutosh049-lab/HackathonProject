@@ -36,11 +36,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Request logging middleware
+// Request logging middleware (minimal)
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  console.log('Headers:', req.headers);
-  console.log('Body:', req.body);
+  console.log(`${req.method} ${req.path}`);
   next();
 });
 
@@ -55,6 +53,11 @@ app.use("/debug", debugRoutes);
 
 app.get("/", (req, res) => {
   res.send("Improve My City Backend Running ✅");
+});
+
+// Health check endpoint (fast response, no DB calls)
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 const PORT = process.env.PORT || 8081
